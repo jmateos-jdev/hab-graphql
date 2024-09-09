@@ -1,0 +1,240 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model ml_rules {
+  id          Int       @id @default(autoincrement()) @db.UnsignedInt
+  origin      String    @db.VarChar(255)
+  destiny     String    @db.VarChar(255)
+  id_category BigInt    @db.UnsignedBigInt
+  createdBy   Int       @db.UnsignedInt
+  createdAt   DateTime  @default(now()) @db.DateTime(0)
+  updatedBy   Int?      @db.UnsignedInt
+  updatedAt   DateTime? @db.DateTime(0)
+
+  @@unique([origin, destiny, id_category], map: "rule")
+  @@index([id_category], map: "id_category")
+}
+
+model pedidosYa_addresses {
+  id        Int       @id @default(autoincrement()) @db.UnsignedInt
+  street    String    @db.VarChar(200)
+  number    String    @db.VarChar(50)
+  city      String    @db.VarChar(100)
+  country   String    @db.VarChar(100)
+  active    Boolean   @default(true)
+  createdBy Int       @db.UnsignedInt
+  createdAt DateTime  @default(now()) @db.DateTime(0)
+  updatedBy Int?      @db.UnsignedInt
+  updatedAt DateTime? @db.DateTime(0)
+
+  @@unique([street, number, city, country], map: "street")
+}
+
+model product_info {
+  id                  Int                   @id @default(autoincrement()) @db.UnsignedInt
+  name                String                @db.Text
+  brand               String?               @db.Text
+  color               String?               @db.Text
+  href                String?               @db.Text
+  deleted             Boolean               @default(false)
+  id_site             Int                   @db.UnsignedInt
+  id_product          BigInt?               @db.UnsignedBigInt
+  createdBy           Int                   @db.UnsignedInt
+  createdAt           DateTime              @default(now()) @db.DateTime(0)
+  updatedBy           Int?                  @db.UnsignedInt
+  updatedAt           DateTime?             @db.DateTime(0)
+  sites               sites                 @relation(fields: [id_site], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "product_info_ibfk_1")
+  products            products[]
+  products_similarity products_similarity[]
+
+  @@index([id_product], map: "id_product")
+  @@index([id_site], map: "id_site")
+}
+
+model products {
+  id                     Int                 @id @default(autoincrement()) @db.UnsignedInt
+  available              Boolean             @default(true)
+  currency               String?             @db.Text
+  price                  Decimal?            @db.Decimal(11, 2)
+  listPrice              Decimal?            @db.Decimal(11, 2)
+  discount               String?             @db.Text
+  promo                  String?             @db.Text
+  unitPrice              Decimal?            @db.Decimal(11, 2)
+  unit                   String?             @db.Text
+  href                   String?             @db.Text
+  id_scraping_url_detail Int                 @db.UnsignedInt
+  id_product_info        Int                 @db.UnsignedInt
+  createdBy              Int                 @db.UnsignedInt
+  createdAt              DateTime            @default(now()) @db.DateTime(0)
+  updatedBy              Int?                @db.UnsignedInt
+  updatedAt              DateTime?           @db.DateTime(0)
+  scraping_url_detail    scraping_url_detail @relation(fields: [id_scraping_url_detail], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "products_ibfk_1")
+  product_info           product_info        @relation(fields: [id_product_info], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "products_ibfk_2")
+
+  @@index([id_product_info], map: "id_product_info")
+  @@index([id_scraping_url_detail], map: "id_scraping_url_detail")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model products_similarity {
+  id              Int          @id @default(autoincrement()) @db.UnsignedInt
+  id_product_info Int          @db.UnsignedInt
+  name            String       @db.VarChar(255)
+  brand           String       @db.VarChar(255)
+  subbrand        String       @db.VarChar(255)
+  similarity      Decimal      @db.Decimal(3, 2)
+  id_prod_product BigInt       @db.UnsignedBigInt
+  product_info    product_info @relation(fields: [id_product_info], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "products_similarity_ibfk_1")
+
+  @@index([id_product_info], map: "id_product_info")
+}
+
+model rappi_addresses {
+  id             Int              @id @default(autoincrement()) @db.UnsignedInt
+  street         String           @db.VarChar(200)
+  number         String           @db.VarChar(50)
+  city           String           @db.VarChar(100)
+  country        String           @db.VarChar(100)
+  active         Boolean          @default(true)
+  createdBy      Int              @db.UnsignedInt
+  createdAt      DateTime         @default(now()) @db.DateTime(0)
+  updatedBy      Int?             @db.UnsignedInt
+  updatedAt      DateTime?        @db.DateTime(0)
+  rappi_products rappi_products[]
+
+  @@unique([street, number, city, country], map: "street")
+}
+
+model rappi_categories {
+  id                 Int                @id @default(autoincrement()) @db.UnsignedInt
+  name               String             @db.VarChar(200)
+  id_market_type     Int                @db.UnsignedInt
+  active             Boolean            @default(true)
+  createdBy          Int                @db.UnsignedInt
+  createdAt          DateTime           @default(now()) @db.DateTime(0)
+  updatedBy          Int?               @db.UnsignedInt
+  updatedAt          DateTime?          @db.DateTime(0)
+  rappi_market_types rappi_market_types @relation(fields: [id_market_type], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "rappi_categories_ibfk_1")
+  rappi_products     rappi_products[]
+
+  @@unique([name, id_market_type], map: "name")
+  @@index([id_market_type], map: "id_market_type")
+}
+
+model rappi_market_types {
+  id               Int                @id @default(autoincrement()) @db.UnsignedInt
+  type             String             @unique(map: "type") @db.VarChar(200)
+  active           Boolean            @default(true)
+  createdBy        Int                @db.UnsignedInt
+  createdAt        DateTime           @default(now()) @db.DateTime(0)
+  updatedBy        Int?               @db.UnsignedInt
+  updatedAt        DateTime?          @db.DateTime(0)
+  rappi_categories rappi_categories[]
+}
+
+model rappi_products {
+  id                Int              @id @default(autoincrement()) @db.UnsignedInt
+  name              String?          @db.Text
+  brand             String?          @db.Text
+  color             String?          @db.Text
+  available         Boolean          @default(true)
+  currency          String?          @db.Text
+  price             Decimal?         @db.Decimal(11, 2)
+  listPrice         Decimal?         @db.Decimal(11, 2)
+  discount          String?          @db.Text
+  promo             String?          @db.Text
+  ean               String?          @db.Text
+  unitPrice         Decimal?         @db.Decimal(11, 2)
+  unit              String?          @db.Text
+  id_rappi_address  Int              @db.UnsignedInt
+  id_rappi_category Int              @db.UnsignedInt
+  store_name        String?          @db.Text
+  createdBy         Int              @db.UnsignedInt
+  createdAt         DateTime         @default(now()) @db.DateTime(0)
+  updatedBy         Int?             @db.UnsignedInt
+  updatedAt         DateTime?        @db.DateTime(0)
+  rappi_addresses   rappi_addresses  @relation(fields: [id_rappi_address], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "rappi_products_ibfk_1")
+  rappi_categories  rappi_categories @relation(fields: [id_rappi_category], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "rappi_products_ibfk_2")
+
+  @@index([id_rappi_address], map: "id_rappi_address")
+  @@index([id_rappi_category], map: "id_rappi_category")
+}
+
+model scraping_url_detail {
+  id          Int                         @id @default(autoincrement()) @db.UnsignedInt
+  status      scraping_url_detail_status? @default(En_Espera)
+  id_scraping Int                         @db.UnsignedInt
+  id_url      Int                         @db.UnsignedInt
+  createdBy   Int                         @db.UnsignedInt
+  createdAt   DateTime                    @default(now()) @db.DateTime(0)
+  updatedBy   Int?                        @db.UnsignedInt
+  updatedAt   DateTime?                   @db.DateTime(0)
+  products    products[]
+  scrapings   scrapings                   @relation(fields: [id_scraping], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "scraping_url_detail_ibfk_1")
+  urls        urls                        @relation(fields: [id_url], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "scraping_url_detail_ibfk_2")
+
+  @@index([id_scraping], map: "id_scraping")
+  @@index([id_url], map: "id_url")
+}
+
+model scrapings {
+  id                  Int                   @id @default(autoincrement()) @db.UnsignedInt
+  createdBy           Int                   @db.UnsignedInt
+  createdAt           DateTime              @default(now()) @db.DateTime(0)
+  scraping_url_detail scraping_url_detail[]
+}
+
+model sites {
+  id           Int            @id @default(autoincrement()) @db.UnsignedInt
+  name         String         @unique(map: "name") @db.VarChar(200)
+  active       Boolean        @default(true)
+  id_template  Int            @db.UnsignedInt
+  createdBy    Int            @db.UnsignedInt
+  createdAt    DateTime       @default(now()) @db.DateTime(0)
+  updatedBy    Int?           @db.UnsignedInt
+  updatedAt    DateTime?      @db.DateTime(0)
+  product_info product_info[]
+  templates    templates      @relation(fields: [id_template], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "sites_ibfk_1")
+  urls         urls[]
+
+  @@index([id_template], map: "id_template")
+}
+
+model templates {
+  id        Int      @id @default(autoincrement()) @db.UnsignedInt
+  name      String   @unique(map: "name") @db.VarChar(200)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.DateTime(0)
+  sites     sites[]
+}
+
+model urls {
+  id                  Int                   @id @default(autoincrement()) @db.UnsignedInt
+  url                 String                @db.Text
+  active              Boolean               @default(true)
+  id_site             Int                   @db.UnsignedInt
+  id_category         BigInt                @db.UnsignedBigInt
+  createdBy           Int                   @db.UnsignedInt
+  createdAt           DateTime              @default(now()) @db.DateTime(0)
+  updatedBy           Int?                  @db.UnsignedInt
+  updatedAt           DateTime?             @db.DateTime(0)
+  scraping_url_detail scraping_url_detail[]
+  sites               sites                 @relation(fields: [id_site], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "urls_ibfk_1")
+
+  @@index([id_category], map: "id_category")
+  @@index([id_site], map: "id_site")
+}
+
+enum scraping_url_detail_status {
+  En_Espera            @map("En Espera")
+  En_Progreso          @map("En Progreso")
+  Error
+  Pendiente_de_Validar @map("Pendiente de Validar")
+  Validado
+}

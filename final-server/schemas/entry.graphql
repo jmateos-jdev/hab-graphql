@@ -1,0 +1,25 @@
+#import User from "user.graphql"
+
+type Entry {
+    id: Int!
+    title: String!
+    place: String!
+    description: String!
+    user: User!
+    photos: [Photo!]
+    votes: [Vote!]
+    createAt: String!
+}
+
+type Photo {
+    id: Int!
+    name: String!
+    createAt: String!
+}
+
+type Vote {
+    id: Int!
+    value: Int!
+    user: User!
+    createAt: String!
+}
